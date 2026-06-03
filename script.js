@@ -1,5 +1,5 @@
 /**
- * GPS TRACKER - LÓGICA DO SISTEMA
+ * GPS TRACKER - LÓGICA DO SISTEMA E SIMULADOR
  */
 
 // ============================================
@@ -26,6 +26,8 @@ let pulsePhase = 0;
 let mapVisible = false;
 let leafletMap = null;
 
+let simulatorInstance = null;
+
 // ============================================
 // INICIALIZAÇÃO E ABAS
 // ============================================
@@ -48,6 +50,9 @@ function switchTab(tabId) {
 
     if (tabId === 'tab-tracker') {
         setTimeout(() => windowResized(), 100);
+    } else if (tabId === 'tab-learn' && !simulatorInstance) {
+        // Inicializa o simulador interativo apenas quando abrir a aba de teoria pela primeira vez
+        simulatorInstance = new p5(simulatorSketch);
     }
 }
 
@@ -154,7 +159,7 @@ function adminReset() {
 }
 
 // ============================================
-// P5.JS - VISUALIZAÇÃO
+// P5.JS - TRACKER RADAR (ESBOÇO GLOBAL)
 // ============================================
 
 function setup() {
@@ -253,3 +258,148 @@ function toggleMap() {
         btn.style.background = '#4fc3f7'; btn.style.color = '#0a0a12';
     }
 }
+
+// ============================================
+// P5.JS - SIMULADOR INTERATIVO (INSTANCE MODE)
+// ============================================
+
+const simulatorSketch = (p) => {
+    let userPos;
+    let satellites = [];
+    let isDraggingUser = false;
+    let isDraggingSat = null;
+
+    p.setup = () => {
+        let container = document.getElementById('simulation-container');
+        let w = container.offsetWidth || 500;
+        let h = 350; // Altura fixa ideal
+        let canvas = p.createCanvas(w, h);
+        canvas.parent('simulation-container');
+
+        // Inicializa satélites em locais espalhados
+        satellites = [
+            { id: 'A', x: 100, y: 80, color: '#44ff44', label: 'A (Verde)' },
+            { id: 'B', x: w - 100, y: 100, color: '#4fc3f7', label: 'B (Cyan)' },
+            { id: 'C', x: w / 2, y: h - 80, color: '#ec4072', label: 'C (Rosa)' }
+        ];
+
+        userPos = p.createVector(w / 2, h / 2 - 20);
+    };
+
+    p.draw = () => {
+        p.background(8, 8, 15);
+        p.drawGrid();
+
+        // Linhas de distância e círculos orbitais
+        satellites.forEach(sat => {
+            let d = p.dist(userPos.x, userPos.y, sat.x, sat.y);
+
+            // Círculo eletromagnético (Raio da distância)
+            p.noFill();
+            p.stroke(sat.color + '22'); // Alfa reduzido
+            p.strokeWeight(1.5);
+            p.ellipse(sat.x, sat.y, d * 2);
+
+            // Linha direta Satélite -> Usuário
+            p.stroke(sat.color + 'aa');
+            p.strokeWeight(1);
+            p.line(sat.x, sat.y, userPos.x, userPos.y);
+
+            // Desenha o Satélite
+            p.fill(sat.color);
+            p.noStroke();
+            p.ellipse(sat.x, sat.y, 22);
+            
+            p.fill(0);
+            p.textAlign(p.CENTER, p.CENTER);
+            p.textSize(12);
+            p.textStyle(p.BOLD);
+            p.text(sat.id, sat.x, sat.y);
+
+            // Atualiza os dados no painel lateral HTML
+            let htmlId = `sim-sat-${sat.id.toLowerCase()}`;
+            let el = document.getElementById(htmlId);
+            if (el) {
+                // Escala simulada: pixels -> metros (x5 para parecer realista)
+                let simX = ((sat.x - p.width/2) / 2).toFixed(1);
+                let simY = ((p.height/2 - sat.y) / 2).toFixed(1);
+                let simDist = (d / 2).toFixed(1);
+                el.innerHTML = `<strong>Satélite ${sat.id}:</strong> Posição (${simX}, ${simY}) | Raio: <strong>${simDist}m</strong>`;
+            }
+        });
+
+        // Desenha o Usuário (Você)
+        p.stroke(255);
+        p.strokeWeight(2);
+        p.fill(79, 195, 247);
+        p.ellipse(userPos.x, userPos.y, 16);
+
+        // Halo de pulso no usuário
+        p.noFill();
+        p.stroke(79, 195, 247, 100);
+        let pulse = 16 + 10 * p.sin(p.frameCount * 0.1);
+        p.ellipse(userPos.x, userPos.y, pulse);
+
+        // Texto informativo
+        p.noStroke();
+        p.fill(255);
+        p.textSize(11);
+        p.textStyle(p.NORMAL);
+        p.textAlign(p.CENTER, p.BOTTOM);
+        p.text("Você (Arraste)", userPos.x, userPos.y - 12);
+
+        // Atualiza a posição calculada do Usuário no HTML
+        let userEl = document.getElementById('sim-user-pos');
+        if (userEl) {
+            let simUserX = ((userPos.x - p.width/2) / 2).toFixed(1);
+            let simUserY = ((p.height/2 - userPos.y) / 2).toFixed(1);
+            userEl.textContent = `(${simUserX}, ${simUserY})`;
+        }
+    };
+
+    p.drawGrid = () => {
+        p.stroke(255, 255, 255, 15);
+        p.strokeWeight(0.5);
+        for(let x=0; x<p.width; x+=30) p.line(x, 0, x, p.height);
+        for(let y=0; y<p.height; y+=30) p.line(0, y, p.width, y);
+        
+        // Eixo de Origem (0,0) fictício
+        p.stroke(255, 255, 255, 30);
+        p.line(p.width/2, 0, p.width/2, p.height);
+        p.line(0, p.height/2, p.width, p.height/2);
+    };
+
+    // Detecção de clique para arrastar
+    p.mousePressed = () => {
+        // Verifica se clicou no usuário
+        let dUser = p.dist(p.mouseX, p.mouseY, userPos.x, userPos.y);
+        if (dUser < 15) {
+            isDraggingUser = true;
+            return;
+        }
+
+        // Verifica se clicou em algum satélite (permite mover os satélites também!)
+        for (let i = 0; i < satellites.length; i++) {
+            let dSat = p.dist(p.mouseX, p.mouseY, satellites[i].x, satellites[i].y);
+            if (dSat < 15) {
+                isDraggingSat = i;
+                return;
+            }
+        }
+    };
+
+    p.mouseDragged = () => {
+        if (isDraggingUser) {
+            userPos.x = p.constrain(p.mouseX, 10, p.width - 10);
+            userPos.y = p.constrain(p.mouseY, 10, p.height - 10);
+        } else if (isDraggingSat !== null) {
+            satellites[isDraggingSat].x = p.constrain(p.mouseX, 10, p.width - 10);
+            satellites[isDraggingSat].y = p.constrain(p.mouseY, 10, p.height - 10);
+        }
+    };
+
+    p.mouseReleased = () => {
+        isDraggingUser = false;
+        isDraggingSat = null;
+    };
+};
