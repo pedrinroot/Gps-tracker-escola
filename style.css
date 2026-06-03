@@ -1,0 +1,189 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0a12;
+    color: #fff;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Header & Nav */
+#header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 30px;
+    background: rgba(10, 10, 18, 0.7);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#header h1 {
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: #4fc3f7;
+    color: #0a0a12;
+    box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+}
+
+/* Tab Management */
+.tab-content {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 70px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tracker Tab Components */
+.controls-overlay {
+    position: absolute;
+    top: 85px;
+    left: 20px;
+    z-index: 900;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-primary, .btn-success, .btn-admin {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-primary { background: #4fc3f7; color: #0a0a12; }
+.btn-success { background: #44ff44; color: #0a0a12; }
+.btn-admin { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; }
+
+.btn-primary:hover, .btn-success:hover { transform: scale(1.05); }
+
+#info-panel {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 900;
+    min-width: 220px;
+    backdrop-filter: blur(10px);
+}
+
+#info-panel h3 {
+    font-size: 0.75rem;
+    color: #4fc3f7;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.coord-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    margin: 4px 0;
+}
+
+.coord-value { color: #fff; font-weight: 600; }
+
+#canvas-container, #map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#canvas-container { z-index: 10; pointer-events: none; }
+#map-container { z-index: 5; display: none; }
+
+/* Learn Tab Components */
+#tab-learn {
+    background: linear-gradient(180deg, #0a0a12 0%, #1a1a2e 100%);
+    padding: 100px 20px;
+}
+
+.container { max-width: 1000px; margin: 0 auto; }
+
+.hero-section { text-align: center; margin-bottom: 80px; }
+.hero-section h2 { font-size: 3rem; margin-bottom: 20px; color: #4fc3f7; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+
+.learn-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 40px;
+    transition: all 0.3s;
+}
+
+.learn-card:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-5px); }
+
+.math-box {
+    background: #000;
+    padding: 20px;
+    border-radius: 16px;
+    font-family: monospace;
+    color: #ec4072;
+    font-size: 1.2rem;
+    margin: 20px 0;
+    text-align: center;
+}
+
+/* Status */
+#status { display: flex; align-items: center; gap: 12px; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff4444; }
+.status-dot.connected { background: #44ff44; box-shadow: 0 0 12px #44ff44; }
+
+@media (max-width: 768px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    #header { flex-direction: column; gap: 10px; padding: 15px; }
+    .controls-overlay { top: 120px; flex-direction: column; }
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Tracker - EE José Barbosa Rodrigues</title>
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Estilos Personalizados -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="header">
+        <h1>🛰️ GPS Tracker</h1>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-tracker')">Monitoramento</button>
+            <button class="tab-btn" onclick="switchTab('tab-learn')">Como Funciona?</button>
+        </div>
+
+        <div id="status">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Conectando...</span>
+        </div>
+    </div>
+
+    <!-- ABA 1: MONITORAMENTO -->
+    <div id="tab-tracker" class="tab-content active">
+        <div class="controls-overlay">
+            <button id="toggle-map-btn" class="btn-primary">🗺️ Mostrar Mapa</button>
+            <button id="activate-gps-btn" class="btn-success">📡 Iniciar GPS</button>
+            <button id="stop-all-btn" class="btn-admin">Admin: Reset</button>
+        </div>
+
+        <div id="info-panel">
+            <h3>Coordenadas</h3>
+            <div class="coord-row">
+                <span class="coord-label">Long(X):</span>
+                <span class="coord-value" id="coord-x">0.00</span>
+            </div>
+            <div class="coord-row">
+                <span class="coord-label">Lat(Y):</span>
+                <span class="coord-value" id="coord-y">0.00</span>
+            </div>
+        </div>
+
+        <div id="canvas-container"></div>
+        <div id="map-container"></div>
+    </div>
+
+    <!-- ABA 2: TEORIA -->
+    <div id="tab-learn" class="tab-content">
+        <div class="container">
+            <div class="hero-section">
+                <h2>Teoria do GPS e Trilateração</h2>
+                <p>A matemática aplicada à localização global.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="learn-card">
+                    <h3>📡 O Sistema GPS</h3>
+                    <p>Funciona através de uma rede de satélites que transmitem sinais de tempo precisos. Seu celular calcula quanto tempo o sinal levou para chegar e determina a distância.</p>
+                </div>
+                <div class="learn-card">
+                    <h3>📐 Trilateração</h3>
+                    <p>Com a distância de 3 satélites, seu GPS encontra o ponto comum de três esferas. No plano cartesiano do site, usamos círculos para simplificar.</p>
+                </div>
+            </div>
+
+            <div class="learn-card">
+                <h3>X,Y: Geometria Analítica</h3>
+                <div class="math-box">d = √[(x₂ - x₁)² + (y₂ - y₁)²]</div>
+                <p>Usamos a fórmula acima para converter graus de latitude/longitude em metros e posicionar os usuários no gráfico.</p>
+                <div class="math-box">(x - h)² + (y - k)² = r²</div>
+                <p>Esta equação define o raio de busca ou alcance de um dispositivo.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do Sistema -->
+    <script src="script.js"></script>
+</body>
+
+</html>
