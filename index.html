@@ -21,36 +21,47 @@
 
 <body>
     <div id="header">
-        <h1>🛰️ GPS Tracker</h1>
-
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-tracker')">Monitoramento</button>
-            <button class="tab-btn" onclick="switchTab('tab-learn')">Como Funciona?</button>
+        <div class="header-left">
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('tab-tracker')">Monitoramento</button>
+                <button class="tab-btn" onclick="switchTab('tab-learn')">Como Funciona?</button>
+            </div>
+            <button id="toggle-map-btn" class="btn-header">🗺️ Mostrar Mapa</button>
+            <button id="activate-gps-btn" class="btn-header-success">📡 Iniciar GPS</button>
         </div>
 
-        <div id="status">
-            <span class="status-dot" id="status-dot"></span>
-            <span id="status-text">Conectando...</span>
+        <div class="header-center">
+            <h1 class="project-title">Gps - Rastreando o invisível</h1>
+            <span class="school-subtitle">EE José Barbosa Rodrigues</span>
+        </div>
+
+        <div class="header-right">
+            <button id="stop-all-btn" class="btn-header-admin">Admin: Reset</button>
+            <div id="status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Conectando...</span>
+            </div>
         </div>
     </div>
 
     <!-- ABA 1: MONITORAMENTO -->
     <div id="tab-tracker" class="tab-content active">
-        <div class="controls-overlay">
-            <button id="toggle-map-btn" class="btn-primary">🗺️ Mostrar Mapa</button>
-            <button id="activate-gps-btn" class="btn-success">📡 Iniciar GPS</button>
-            <button id="stop-all-btn" class="btn-admin">Admin: Reset</button>
-        </div>
-
-        <div id="info-panel">
-            <h3>Coordenadas</h3>
-            <div class="coord-row">
-                <span class="coord-label">Long(X):</span>
-                <span class="coord-value" id="coord-x">0.00</span>
+        <!-- Barra Lateral de Coordenadas (Sidebar) -->
+        <div id="info-sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Coordenadas do Rastreio</h3>
+                <button class="close-sidebar-btn" onclick="toggleSidebar(false)">&times;</button>
             </div>
-            <div class="coord-row">
-                <span class="coord-label">Lat(Y):</span>
-                <span class="coord-value" id="coord-y">0.00</span>
+            <div class="sidebar-content">
+                <div class="coord-row">
+                    <span class="coord-label">Longitude (X):</span>
+                    <span class="coord-value" id="coord-x">0.00000</span>
+                </div>
+                <div class="coord-row">
+                    <span class="coord-label">Latitude (Y):</span>
+                    <span class="coord-value" id="coord-y">0.00000</span>
+                </div>
+                <p class="sidebar-tip">💡 Você pode clicar ou arrastar o ponto verde no gráfico cartesiano para simular sua localização e atualizar as coordenadas.</p>
             </div>
         </div>
 

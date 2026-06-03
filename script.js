@@ -15,6 +15,9 @@ let activeDevices = {};
 let myDeviceId = localStorage.getItem('my_device_id') || ('celular_' + Math.floor(Math.random() * 10000));
 localStorage.setItem('my_device_id', myDeviceId);
 
+// Inicializa a própria posição no centro da escola para começar
+activeDevices[myDeviceId] = { lat: -20.51953, lng: -54.59590, timestamp: Date.now() };
+
 let isTracking = false;
 let watchId = null;
 let realtimeChannel = null;
@@ -27,6 +30,7 @@ let mapVisible = false;
 let leafletMap = null;
 
 let simulatorInstance = null;
+let isDraggingLocalDevice = false;
 
 // ============================================
 // INICIALIZAÇÃO E ABAS
@@ -35,6 +39,7 @@ let simulatorInstance = null;
 window.onload = () => {
     initSupabase();
     setupEventListeners();
+    updateInfoPanel(-54.59590, -20.51953); // Coordenadas iniciais
 };
 
 function switchTab(tabId) {
@@ -62,8 +67,17 @@ function setupEventListeners() {
     document.getElementById('stop-all-btn').addEventListener('click', adminReset);
 }
 
+// Controla a abertura/fechamento da barra lateral
+function toggleSidebar(show) {
+    const sidebar = document.getElementById('info-sidebar');
+    if (sidebar) {
+        if (show) sidebar.classList.add('open');
+        else sidebar.classList.remove('open');
+    }
+}
+
 // ============================================
-// GPS E TRACKING
+// GPS E TRACKING (COM SOBREPOSIÇÃO MANUAL)
 // ============================================
 
 async function initSupabase() {
@@ -100,28 +114,14 @@ function startTrackingGPS() {
 
     isTracking = true;
     const btn = document.getElementById('activate-gps-btn');
-    btn.innerHTML = '⛔ Parar Rastreio';
+    btn.innerHTML = '⛔ Parar GPS';
     btn.style.background = '#ffaa00';
+    btn.style.color = '#0a0a12';
 
     watchId = navigator.geolocation.watchPosition(
         async (position) => {
             const { latitude: lat, longitude: lng } = position.coords;
-
-            if (realtimeChannel) {
-                realtimeChannel.send({ 
-                    type: 'broadcast', 
-                    event: 'gps_update', 
-                    payload: { id: myDeviceId, lat, lng } 
-                });
-            }
-
-            activeDevices[myDeviceId] = { lat, lng, timestamp: Date.now() };
-            updateInfoPanel(lng, lat);
-
-            if (Date.now() - lastDbInsert > 10000 && supabaseClient) {
-                await supabaseClient.from('coordenadas').insert([{ x: lng.toString(), y: lat.toString() }]);
-                lastDbInsert = Date.now();
-            }
+            updateLocalPosition(lat, lng);
         },
         (err) => { 
             alert('Ative a localização!'); 
@@ -136,7 +136,30 @@ function stopTrackingGPS() {
     const btn = document.getElementById('activate-gps-btn');
     btn.innerHTML = '📡 Iniciar GPS';
     btn.style.background = '#44ff44';
+    btn.style.color = '#0a0a12';
     if (watchId) navigator.geolocation.clearWatch(watchId);
+}
+
+// Atualiza a própria posição local e notifica a rede
+function updateLocalPosition(lat, lng) {
+    activeDevices[myDeviceId] = { lat, lng, timestamp: Date.now() };
+    updateInfoPanel(lng, lat);
+    toggleSidebar(true); // Puxa a barra lateral automaticamente
+
+    // Envia aos outros celulares conectados via WebSocket
+    if (realtimeChannel) {
+        realtimeChannel.send({ 
+            type: 'broadcast', 
+            event: 'gps_update', 
+            payload: { id: myDeviceId, lat, lng } 
+        });
+    }
+
+    // Salva no banco histórico a cada 10 segundos
+    if (Date.now() - lastDbInsert > 10000 && supabaseClient) {
+        supabaseClient.from('coordenadas').insert([{ x: lng.toString(), y: lat.toString() }]);
+        lastDbInsert = Date.now();
+    }
 }
 
 function updateStatus(connected, message) {
@@ -147,19 +170,20 @@ function updateStatus(connected, message) {
 }
 
 function updateInfoPanel(x, y) {
-    document.getElementById('coord-x').textContent = x.toFixed(5);
-    document.getElementById('coord-y').textContent = y.toFixed(5);
+    document.getElementById('coord-x').textContent = x.toFixed(6);
+    document.getElementById('coord-y').textContent = y.toFixed(6);
 }
 
 function adminReset() {
     if (confirm("Resetar todos os dispositivos ativos?")) {
         if (realtimeChannel) realtimeChannel.send({ type: 'broadcast', event: 'stop_tracking' });
         activeDevices = {};
+        toggleSidebar(false);
     }
 }
 
 // ============================================
-// P5.JS - TRACKER RADAR (ESBOÇO GLOBAL)
+// P5.JS - TRACKER RADAR (INTERATIVIDADE MOUSE/TOUCH)
 // ============================================
 
 function setup() {
@@ -219,8 +243,52 @@ function drawActiveDevices() {
         fill(isMe ? '#44ff44' : '#ff5252'); noStroke();
         ellipse(px, py, 12);
         fill(255); textSize(10); textAlign(CENTER);
-        text(id.substring(0, 8), px, py - 20);
+        text(id === myDeviceId ? "Você" : id.substring(0, 8), px, py - 20);
     }
+}
+
+// -- LÓGICA DE CLIQUE E ARRASTO NO CANVAS GLOBAL --
+function mousePressed() {
+    if (mapVisible || document.querySelector('.tab-btn.active').textContent !== 'Monitoramento') return;
+
+    let myDev = activeDevices[myDeviceId];
+    if (myDev) {
+        let px, py;
+        const diffLng = myDev.lng - (-54.59590);
+        const diffLat = myDev.lat - (-20.51953);
+        px = (width / 2) + (diffLng * 111320 * Math.cos(-20.5 * Math.PI / 180) * SCALE);
+        py = (height / 2) - (diffLat * 111320 * SCALE);
+
+        let d = dist(mouseX, mouseY, px, py);
+        // Clicou diretamente sobre o ponto do usuário
+        if (d < 25) {
+            isDraggingLocalDevice = true;
+        } else {
+            // Se clicar em qualquer outra parte do gráfico, move para lá automaticamente
+            handleScreenInteraction(mouseX, mouseY);
+        }
+    }
+}
+
+function mouseDragged() {
+    if (isDraggingLocalDevice) {
+        handleScreenInteraction(mouseX, mouseY);
+    }
+}
+
+function mouseReleased() {
+    isDraggingLocalDevice = false;
+}
+
+// Converte a posição do pixel do mouse/touch em coordenadas de GPS (lat/lng) e atualiza
+function handleScreenInteraction(mx, my) {
+    const diffLng = (mx - width / 2) / (111320 * Math.cos(-20.5 * Math.PI / 180) * SCALE);
+    const diffLat = (height / 2 - my) / (111320 * SCALE);
+
+    const lng = diffLng + (-54.59590);
+    const lat = diffLat + (-20.51953);
+
+    updateLocalPosition(lat, lng);
 }
 
 function windowResized() {
@@ -229,7 +297,7 @@ function windowResized() {
 }
 
 // ============================================
-// LEAFLET MAP
+// LEAFLET MAP (E INTERATIVIDADE DO MAPA)
 // ============================================
 
 function toggleMap() {
@@ -244,18 +312,23 @@ function toggleMap() {
 
         if (!leafletMap) {
             leafletMap = L.map('map-container', {
-                zoomControl: false, dragging: true, scrollWheelZoom: true
+                zoomControl: true, dragging: true, scrollWheelZoom: true
             }).setView([-20.51953, -54.59590], 19);
 
             L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
                 maxZoom: 22, attribution: '© Google'
             }).addTo(leafletMap);
+
+            // CLIQUE NO MAPA: Atualiza a posição imediatamente e puxa a barra
+            leafletMap.on('click', (e) => {
+                updateLocalPosition(e.latlng.lat, e.latlng.lng);
+            });
         }
         setTimeout(() => leafletMap.invalidateSize(), 100);
     } else {
         mapDiv.style.display = 'none';
         btn.textContent = 'Mostrar Mapa';
-        btn.style.background = '#4fc3f7'; btn.style.color = '#0a0a12';
+        btn.style.background = 'rgba(255, 255, 255, 0.05)'; btn.style.color = '#fff';
     }
 }
 
@@ -272,11 +345,10 @@ const simulatorSketch = (p) => {
     p.setup = () => {
         let container = document.getElementById('simulation-container');
         let w = container.offsetWidth || 500;
-        let h = 350; // Altura fixa ideal
+        let h = 350;
         let canvas = p.createCanvas(w, h);
         canvas.parent('simulation-container');
 
-        // Inicializa satélites em locais espalhados
         satellites = [
             { id: 'A', x: 100, y: 80, color: '#44ff44', label: 'A (Verde)' },
             { id: 'B', x: w - 100, y: 100, color: '#4fc3f7', label: 'B (Cyan)' },
@@ -290,22 +362,18 @@ const simulatorSketch = (p) => {
         p.background(8, 8, 15);
         p.drawGrid();
 
-        // Linhas de distância e círculos orbitais
         satellites.forEach(sat => {
             let d = p.dist(userPos.x, userPos.y, sat.x, sat.y);
 
-            // Círculo eletromagnético (Raio da distância)
             p.noFill();
-            p.stroke(sat.color + '22'); // Alfa reduzido
+            p.stroke(sat.color + '22');
             p.strokeWeight(1.5);
             p.ellipse(sat.x, sat.y, d * 2);
 
-            // Linha direta Satélite -> Usuário
             p.stroke(sat.color + 'aa');
             p.strokeWeight(1);
             p.line(sat.x, sat.y, userPos.x, userPos.y);
 
-            // Desenha o Satélite
             p.fill(sat.color);
             p.noStroke();
             p.ellipse(sat.x, sat.y, 22);
@@ -316,11 +384,9 @@ const simulatorSketch = (p) => {
             p.textStyle(p.BOLD);
             p.text(sat.id, sat.x, sat.y);
 
-            // Atualiza os dados no painel lateral HTML
             let htmlId = `sim-sat-${sat.id.toLowerCase()}`;
             let el = document.getElementById(htmlId);
             if (el) {
-                // Escala simulada: pixels -> metros (x5 para parecer realista)
                 let simX = ((sat.x - p.width/2) / 2).toFixed(1);
                 let simY = ((p.height/2 - sat.y) / 2).toFixed(1);
                 let simDist = (d / 2).toFixed(1);
@@ -328,19 +394,16 @@ const simulatorSketch = (p) => {
             }
         });
 
-        // Desenha o Usuário (Você)
         p.stroke(255);
         p.strokeWeight(2);
         p.fill(79, 195, 247);
         p.ellipse(userPos.x, userPos.y, 16);
 
-        // Halo de pulso no usuário
         p.noFill();
         p.stroke(79, 195, 247, 100);
         let pulse = 16 + 10 * p.sin(p.frameCount * 0.1);
         p.ellipse(userPos.x, userPos.y, pulse);
 
-        // Texto informativo
         p.noStroke();
         p.fill(255);
         p.textSize(11);
@@ -348,7 +411,6 @@ const simulatorSketch = (p) => {
         p.textAlign(p.CENTER, p.BOTTOM);
         p.text("Você (Arraste)", userPos.x, userPos.y - 12);
 
-        // Atualiza a posição calculada do Usuário no HTML
         let userEl = document.getElementById('sim-user-pos');
         if (userEl) {
             let simUserX = ((userPos.x - p.width/2) / 2).toFixed(1);
@@ -363,22 +425,18 @@ const simulatorSketch = (p) => {
         for(let x=0; x<p.width; x+=30) p.line(x, 0, x, p.height);
         for(let y=0; y<p.height; y+=30) p.line(0, y, p.width, y);
         
-        // Eixo de Origem (0,0) fictício
         p.stroke(255, 255, 255, 30);
         p.line(p.width/2, 0, p.width/2, p.height);
         p.line(0, p.height/2, p.width, p.height/2);
     };
 
-    // Detecção de clique para arrastar
     p.mousePressed = () => {
-        // Verifica se clicou no usuário
         let dUser = p.dist(p.mouseX, p.mouseY, userPos.x, userPos.y);
         if (dUser < 15) {
             isDraggingUser = true;
             return;
         }
 
-        // Verifica se clicou em algum satélite (permite mover os satélites também!)
         for (let i = 0; i < satellites.length; i++) {
             let dSat = p.dist(p.mouseX, p.mouseY, satellites[i].x, satellites[i].y);
             if (dSat < 15) {
