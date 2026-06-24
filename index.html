@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="<meta name="google-site-verification" content="yes6155QR6dG2mIXLW9hu9YzRRNtS44Aw476XSTDRdc" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPS Tracker - EE José Barbosa Rodrigues</title>
 
     <!-- Bibliotecas Externas -->
@@ -46,22 +46,29 @@
 
     <!-- ABA 1: MONITORAMENTO -->
     <div id="tab-tracker" class="tab-content active">
+        <!-- Botão Flutuante para Abrir a Barra de Coordenadas (Escondida por padrão) -->
+        <button id="sidebar-toggle-btn" class="floating-toggle-btn" onclick="toggleSidebar()">📊</button>
+
         <!-- Barra Lateral de Coordenadas (Sidebar) -->
         <div id="info-sidebar" class="sidebar">
             <div class="sidebar-header">
-                <h3>Coordenadas do Rastreio</h3>
+                <h3>Coordenadas</h3>
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">&times;</button>
             </div>
             <div class="sidebar-content">
                 <div class="coord-row">
-                    <span class="coord-label">Longitude (X):</span>
+                    <span class="coord-label">Long (X):</span>
                     <span class="coord-value" id="coord-x">0.00000</span>
                 </div>
                 <div class="coord-row">
-                    <span class="coord-label">Latitude (Y):</span>
+                    <span class="coord-label">Lat (Y):</span>
                     <span class="coord-value" id="coord-y">0.00000</span>
                 </div>
-                <p class="sidebar-tip">💡 Você pode clicar ou arrastar o ponto verde no gráfico cartesiano para simular sua localização e atualizar as coordenadas.</p>
+                
+                <!-- Botão de Calibração / Acesso à Bússola (iOS requer interação) -->
+                <button id="compass-permission-btn" class="compass-btn" style="display: none;" onclick="requestCompassPermission()">🧭 Ativar Bússola</button>
+                
+                <p class="sidebar-tip">💡 Clique ou arraste o ponto verde no gráfico cartesiano (radar) ou clique no mapa para alterar sua coordenada.</p>
             </div>
         </div>
 

@@ -32,6 +32,12 @@ let leafletMap = null;
 let simulatorInstance = null;
 let isDraggingLocalDevice = false;
 
+// Variáveis para a Bússola e Filtro do GPS
+let deviceHeading = 0;
+let emaLat = null;
+let emaLng = null;
+const EMA_ALPHA = 0.3; // Fator de suavização do GPS (quanto menor, mais suave/lento)
+
 // ============================================
 // INICIALIZAÇÃO E ABAS
 // ============================================
@@ -40,6 +46,7 @@ window.onload = () => {
     initSupabase();
     setupEventListeners();
     updateInfoPanel(-54.59590, -20.51953); // Coordenadas iniciais
+    setupCompass();
 };
 
 function switchTab(tabId) {
@@ -67,17 +74,74 @@ function setupEventListeners() {
     document.getElementById('stop-all-btn').addEventListener('click', adminReset);
 }
 
-// Controla a abertura/fechamento da barra lateral
+// Controla a abertura/fechamento da barra lateral (Toggle flexível)
 function toggleSidebar(show) {
     const sidebar = document.getElementById('info-sidebar');
     if (sidebar) {
-        if (show) sidebar.classList.add('open');
-        else sidebar.classList.remove('open');
+        if (show === undefined) {
+            sidebar.classList.toggle('open');
+        } else if (show) {
+            sidebar.classList.add('open');
+        } else {
+            sidebar.classList.remove('open');
+        }
     }
 }
 
 // ============================================
-// GPS E TRACKING (COM SOBREPOSIÇÃO MANUAL)
+// CONFIGURAÇÃO DA BÚSSOLA (DEVICE ORIENTATION)
+// ============================================
+
+function setupCompass() {
+    // Verifica se iOS requer permissão explícita
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        const btn = document.getElementById('compass-permission-btn');
+        if (btn) btn.style.display = 'block'; // Mostra botão para iPhone
+    } else {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+}
+
+function requestCompassPermission() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(response => {
+                if (response === 'granted') {
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                    const btn = document.getElementById('compass-permission-btn');
+                    if (btn) btn.style.display = 'none';
+                } else {
+                    alert('Permissão para bússola recusada.');
+                }
+            })
+            .catch(console.error);
+    }
+}
+
+function handleOrientation(event) {
+    // webkitCompassHeading é exclusivo do iOS (preciso). Android usa compasso baseado no alpha.
+    let heading = event.webkitCompassHeading || (360 - event.alpha);
+    if (heading !== undefined && heading !== null) {
+        deviceHeading = heading;
+        
+        // Aplica rotação CSS acelerada por hardware no mapa e no canvas
+        const canvasContainer = document.getElementById('canvas-container');
+        const mapContainer = document.getElementById('map-container');
+        
+        // Adicionamos scale(1.4) para evitar bordas pretas durante a rotação da tela
+        if (canvasContainer) {
+            canvasContainer.style.transform = `rotate(${-deviceHeading}deg) scale(1.4)`;
+            canvasContainer.style.transformOrigin = 'center center';
+        }
+        if (mapContainer) {
+            mapContainer.style.transform = `rotate(${-deviceHeading}deg) scale(1.4)`;
+            mapContainer.style.transformOrigin = 'center center';
+        }
+    }
+}
+
+// ============================================
+// GPS E TRACKING (COM FILTRAGEM SUAVE)
 // ============================================
 
 async function initSupabase() {
@@ -118,16 +182,34 @@ function startTrackingGPS() {
     btn.style.background = '#ffaa00';
     btn.style.color = '#0a0a12';
 
+    // Reseta o filtro ao iniciar novo rastreio
+    emaLat = null;
+    emaLng = null;
+
     watchId = navigator.geolocation.watchPosition(
         async (position) => {
-            const { latitude: lat, longitude: lng } = position.coords;
-            updateLocalPosition(lat, lng);
+            const { latitude: rawLat, longitude: rawLng } = position.coords;
+
+            // Filtro matemático de Média Móvel Exponencial (EMA) para suavizar a precisão
+            if (emaLat === null || emaLng === null) {
+                emaLat = rawLat;
+                emaLng = rawLng;
+            } else {
+                emaLat = emaLat + EMA_ALPHA * (rawLat - emaLat);
+                emaLng = emaLng + EMA_ALPHA * (rawLng - emaLng);
+            }
+
+            updateLocalPosition(emaLat, emaLng);
         },
         (err) => { 
-            alert('Ative a localização!'); 
+            alert('Ative a localização e dê permissão de alta precisão!'); 
             stopTrackingGPS(); 
         },
-        { enableHighAccuracy: true, maximumAge: 0 }
+        { 
+            enableHighAccuracy: true, // Força GPS de hardware de alta precisão
+            maximumAge: 0,            // Garante leitura limpa, sem cache
+            timeout: 5000             // Força atualização veloz
+        }
     );
 }
 
@@ -140,11 +222,15 @@ function stopTrackingGPS() {
     if (watchId) navigator.geolocation.clearWatch(watchId);
 }
 
-// Atualiza a própria posição local e notifica a rede
+// Atualiza a própria posição local, centraliza o mapa e notifica a rede
 function updateLocalPosition(lat, lng) {
     activeDevices[myDeviceId] = { lat, lng, timestamp: Date.now() };
     updateInfoPanel(lng, lat);
-    toggleSidebar(true); // Puxa a barra lateral automaticamente
+
+    // Auto-centraliza o mapa no usuário conforme ele caminha
+    if (leafletMap && mapVisible) {
+        leafletMap.setView([lat, lng], leafletMap.getZoom());
+    }
 
     // Envia aos outros celulares conectados via WebSocket
     if (realtimeChannel) {
@@ -183,12 +269,15 @@ function adminReset() {
 }
 
 // ============================================
-// P5.JS - TRACKER RADAR (INTERATIVIDADE MOUSE/TOUCH)
+// P5.JS - TRACKER RADAR (OTIMIZADO MOBILE)
 // ============================================
 
 function setup() {
     const canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('canvas-container');
+    
+    // Otimização de performance crucial para mobile (evita travamento de CPU/GPU)
+    frameRate(30);
 }
 
 function draw() {
@@ -260,11 +349,9 @@ function mousePressed() {
         py = (height / 2) - (diffLat * 111320 * SCALE);
 
         let d = dist(mouseX, mouseY, px, py);
-        // Clicou diretamente sobre o ponto do usuário
         if (d < 25) {
             isDraggingLocalDevice = true;
         } else {
-            // Se clicar em qualquer outra parte do gráfico, move para lá automaticamente
             handleScreenInteraction(mouseX, mouseY);
         }
     }
@@ -280,7 +367,6 @@ function mouseReleased() {
     isDraggingLocalDevice = false;
 }
 
-// Converte a posição do pixel do mouse/touch em coordenadas de GPS (lat/lng) e atualiza
 function handleScreenInteraction(mx, my) {
     const diffLng = (mx - width / 2) / (111320 * Math.cos(-20.5 * Math.PI / 180) * SCALE);
     const diffLat = (height / 2 - my) / (111320 * SCALE);
@@ -319,7 +405,6 @@ function toggleMap() {
                 maxZoom: 22, attribution: '© Google'
             }).addTo(leafletMap);
 
-            // CLIQUE NO MAPA: Atualiza a posição imediatamente e puxa a barra
             leafletMap.on('click', (e) => {
                 updateLocalPosition(e.latlng.lat, e.latlng.lng);
             });

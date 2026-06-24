@@ -142,18 +142,18 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Sliding Sidebar (Coordinates) */
+/* Sliding Sidebar (Coordinates) - Compact & Premium */
 .sidebar {
     position: absolute;
     top: 70px;
     left: 0;
     bottom: 0;
-    width: 300px;
+    width: 260px;
     background: rgba(10, 10, 18, 0.85);
     backdrop-filter: blur(25px);
     border-right: 1px solid rgba(79, 195, 247, 0.15);
     box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    z-index: 1001; /* Fica acima de tudo, inclusive do canvas */
     transform: translateX(-100%);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
@@ -163,6 +163,54 @@ body {
 .sidebar.open {
     transform: translateX(0);
     border-right: 1px solid rgba(79, 195, 247, 0.4); /* Glow border when active */
+}
+
+/* Floating Sidebar Toggle Button */
+.floating-toggle-btn {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(10, 10, 18, 0.8);
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    color: #4fc3f7;
+    font-size: 1.3rem;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.floating-toggle-btn:hover {
+    transform: scale(1.1);
+    border-color: #4fc3f7;
+    box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+}
+
+/* Compass Activation Button */
+.compass-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #4fc3f7, #0083b0);
+    color: #0a0a12;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(79, 195, 247, 0.2);
+}
+
+.compass-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 195, 247, 0.4);
 }
 
 .sidebar-header {
@@ -475,6 +523,89 @@ body {
     .learn-card.full-width { grid-column: span 1; }
     .simulation-wrapper { grid-template-columns: 1fr; }
     .formula-flex { grid-template-columns: 1fr; }
-    #header { flex-direction: column; gap: 10px; padding: 15px; }
-    .controls-overlay { top: 120px; flex-direction: column; }
+    
+    /* Header compact stack for mobile */
+    #header { 
+        flex-direction: column; 
+        height: auto; 
+        gap: 12px; 
+        padding: 15px;
+        position: relative;
+    }
+    
+    .header-left {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    .nav-tabs {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .btn-header, .btn-header-success {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Ajustar padding das abas no mobile por conta do cabeçalho maior */
+    .tab-content {
+        padding-top: 180px; /* Mais espaço para o cabeçalho empilhado */
+        height: calc(100vh - 180px);
+    }
+    
+    #canvas-container, #map-container {
+        top: 180px;
+        height: calc(100vh - 180px);
+    }
+    
+    #tab-learn {
+        padding-top: 200px;
+    }
+
+    /* Sidebar vira um Bottom-Sheet moderno no Celular */
+    .sidebar {
+        top: auto;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        width: calc(100% - 30px);
+        height: auto;
+        max-height: 280px;
+        border-radius: 20px;
+        border: 1px solid rgba(79, 195, 247, 0.2);
+        border-right: 1px solid rgba(79, 195, 247, 0.2);
+        transform: translateY(150%);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+        box-shadow: 0 -5px 25px rgba(0,0,0,0.6);
+    }
+
+    .sidebar.open {
+        transform: translateY(0);
+    }
+    
+    .sidebar-content {
+        padding: 15px;
+    }
+    
+    .sidebar-tip {
+        display: none; /* Esconde dica para economizar espaço em telas pequenas */
+    }
+
+    .floating-toggle-btn {
+        bottom: 20px;
+        right: 20px;
+        left: auto; /* Lado direito no mobile para não trombar com Leaflet default */
+    }
 }
