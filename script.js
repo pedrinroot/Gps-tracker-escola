@@ -50,16 +50,35 @@ window.onload = () => {
     setupCompass();
 };
 
+// Auxiliar para atualizar texto e ícone dos botões sem destruir a estrutura HTML do mobile
+function setButtonState(btnId, icon, text) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const iconSpan = btn.querySelector('.btn-icon');
+    const textSpan = btn.querySelector('.btn-text');
+    if (iconSpan && textSpan) {
+        iconSpan.textContent = icon;
+        textSpan.textContent = text;
+    } else {
+        btn.innerHTML = `<span class="btn-icon">${icon}</span> <span class="btn-text">${text}</span>`;
+    }
+}
+
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-btn, .bottom-tab-btn').forEach(btn => btn.classList.remove('active'));
 
     document.getElementById(tabId).classList.add('active');
     
-    // Ativa botão correto
+    // Ativa botão correto (desktop header)
     const targetBtn = Array.from(document.querySelectorAll('.tab-btn'))
         .find(btn => btn.getAttribute('onclick').includes(tabId));
     if (targetBtn) targetBtn.classList.add('active');
+
+    // Ativa botão correto (mobile bottom nav)
+    const targetBottomBtn = Array.from(document.querySelectorAll('.bottom-tab-btn'))
+        .find(btn => btn.getAttribute('onclick').includes(tabId));
+    if (targetBottomBtn) targetBottomBtn.classList.add('active');
 
     if (tabId === 'tab-tracker') {
         setTimeout(() => windowResized(), 100);
@@ -207,7 +226,7 @@ function startTrackingGPS() {
 
     isTracking = true;
     const btn = document.getElementById('activate-gps-btn');
-    btn.innerHTML = '⛔ Parar GPS';
+    setButtonState('activate-gps-btn', '⛔', 'Parar GPS');
     btn.style.background = '#ffaa00';
     btn.style.color = '#0a0a12';
 
@@ -245,7 +264,7 @@ function startTrackingGPS() {
 function stopTrackingGPS() {
     isTracking = false;
     const btn = document.getElementById('activate-gps-btn');
-    btn.innerHTML = '📡 Iniciar GPS';
+    setButtonState('activate-gps-btn', '📡', 'Iniciar GPS');
     btn.style.background = '#44ff44';
     btn.style.color = '#0a0a12';
     if (watchId) navigator.geolocation.clearWatch(watchId);
@@ -422,7 +441,7 @@ function toggleMap() {
 
     if (mapVisible) {
         mapDiv.style.display = 'block';
-        btn.textContent = 'Ocultar Mapa';
+        setButtonState('toggle-map-btn', '🗺️', 'Ocultar Mapa');
         btn.style.background = '#ff4444'; btn.style.color = '#fff';
 
         if (!leafletMap) {
@@ -441,7 +460,7 @@ function toggleMap() {
         setTimeout(() => leafletMap.invalidateSize(), 100);
     } else {
         mapDiv.style.display = 'none';
-        btn.textContent = 'Mostrar Mapa';
+        setButtonState('toggle-map-btn', '🗺️', 'Mostrar Mapa');
         btn.style.background = 'rgba(255, 255, 255, 0.05)'; btn.style.color = '#fff';
     }
 }

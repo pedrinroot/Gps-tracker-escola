@@ -536,83 +536,184 @@ body {
 .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff4444; }
 .status-dot.connected { background: #44ff44; box-shadow: 0 0 12px #44ff44; }
 
+/* Bottom Navigation Bar (Mobile only) */
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(10, 10, 18, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 1002;
+    display: none; /* Escondido por padrão no desktop */
+    justify-content: space-around;
+    align-items: center;
+}
+
+.bottom-tab-btn {
+    background: transparent;
+    border: none;
+    color: #6a6a7e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    flex: 1;
+    height: 100%;
+}
+
+.bottom-tab-btn .tab-icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+    transition: transform 0.2s ease;
+}
+
+.bottom-tab-btn.active {
+    color: #4fc3f7;
+}
+
+.bottom-tab-btn.active .tab-icon {
+    transform: scale(1.15);
+}
+
 @media (max-width: 900px) {
     .grid-2 { grid-template-columns: 1fr; }
     .learn-card.full-width { grid-column: span 1; }
     .simulation-wrapper { grid-template-columns: 1fr; }
     .formula-flex { grid-template-columns: 1fr; }
     
-    /* Header compact stack for mobile */
+    /* Mostrar barra inferior de navegação no mobile */
+    .bottom-navigation {
+        display: flex;
+    }
+    
+    /* Esconder abas superiores no mobile */
+    #header .nav-tabs {
+        display: none !important;
+    }
+    
+    /* Header compacto sem abas */
     #header { 
-        flex-direction: column; 
-        height: auto; 
-        gap: 12px; 
-        padding: 15px;
-        position: relative;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        flex-direction: row; 
+        justify-content: space-between;
+        align-items: center;
+        gap: 0; 
+        padding: 0 12px;
+        z-index: 1000;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     
-    .header-left {
+    .header-left, .header-right {
+        display: flex;
+        align-items: center;
+        width: auto;
+        gap: 8px;
+    }
+    
+    .header-center {
+        display: flex;
         flex-direction: column;
-        width: 100%;
-        gap: 10px;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        flex: 1;
     }
     
-    .nav-tabs {
-        width: 100%;
+    .project-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    #header .btn-text,
+    #header #status-text,
+    #header .school-subtitle {
+        display: none !important;
+    }
+    
+    #status {
+        margin: 0;
+        display: flex;
+        align-items: center;
         justify-content: center;
     }
     
-    .tab-btn {
-        flex: 1;
-        text-align: center;
+    /* Estilizar botões do header como botões circulares compactos e elegantes no mobile */
+    .btn-header, .btn-header-success, .btn-header-admin {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
     }
     
-    .btn-header, .btn-header-success {
-        width: 100%;
-        text-align: center;
-    }
-    
-    .header-right {
-        width: 100%;
-        justify-content: space-between;
+    .btn-header-success {
+        background: rgba(68, 255, 68, 0.15);
+        border-color: rgba(68, 255, 68, 0.4);
+        color: #44ff44;
     }
 
-    /* Ajustar padding das abas no mobile por conta do cabeçalho maior */
+    .btn-header-admin {
+        background: rgba(255, 68, 68, 0.15);
+        border-color: rgba(255, 68, 68, 0.4);
+        color: #ff4444;
+    }
+
+    /* Reduzir o espaço do topo, pois o cabeçalho agora está menor */
     .tab-content {
-        padding-top: 180px; /* Mais espaço para o cabeçalho empilhado */
-        height: calc(100vh - 180px);
+        padding-top: 60px;
+        height: calc(100vh - 120px); /* 60px topo + 60px rodapé */
         width: 100%;
         overflow: hidden;
     }
     
     #canvas-container, #map-container {
-        top: 180px;
+        top: 60px;
         left: 0;
         width: 100%;
-        height: calc(100vh - 180px);
+        height: calc(100vh - 120px);
     }
     
     #tab-learn {
-        padding-top: 200px;
-        height: 100vh;
+        padding-top: 70px;
+        padding-bottom: 80px;
+        height: calc(100vh - 60px); /* Deixa rolar até em cima do rodapé */
         overflow-y: auto;
     }
 
-    /* Sidebar vira um Bottom-Sheet de LARGURA TOTAL no Celular */
+    /* Sidebar - Bottom-Sheet COMPACTO (Altura reduzida e posicionado acima da nav) */
     .sidebar {
         top: auto;
         left: 0;
         right: 0;
-        bottom: 0;
+        bottom: 60px; /* Acima da Bottom Navigation (60px) */
         width: 100%;
         height: auto;
-        max-height: 380px;
-        border-radius: 24px 24px 0 0;
-        border: 1px solid rgba(79, 195, 247, 0.25);
+        max-height: 190px; /* Reduzido de 380px para 190px */
+        border-radius: 20px 20px 0 0;
+        border: 1px solid rgba(79, 195, 247, 0.2);
         border-bottom: none;
         transform: translateY(150%);
         transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-        box-shadow: 0 -8px 30px rgba(0,0,0,0.7);
+        box-shadow: 0 -5px 25px rgba(0,0,0,0.6);
         z-index: 1001;
     }
 
@@ -621,34 +722,39 @@ body {
     }
     
     .sidebar-header {
-        padding: 20px 25px 15px 25px;
+        padding: 12px 20px 6px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .sidebar-header h3 {
+        font-size: 0.9rem;
     }
 
     .sidebar-content {
-        padding: 10px 25px 30px 25px;
+        padding: 5px 20px 15px 20px;
+        gap: 5px;
     }
     
-    /* Aumentar o tamanho do texto no mobile para legibilidade */
     .sidebar .coord-row {
-        font-size: 1.3rem;
-        padding: 15px 0;
+        font-size: 1rem;
+        padding: 8px 0;
     }
     
     .sidebar-tip {
-        display: none; /* Esconde dica para economizar espaço em telas pequenas */
+        display: none;
     }
 
-    /* Botões Flutuantes empilhados no canto direito inferior no mobile */
+    /* Botões Flutuantes empilhados verticalmente acima do menu inferior */
     .floating-toggle-btn {
-        bottom: 20px;
+        bottom: 80px; /* Acima da Bottom Navigation (60px) + margem */
         right: 20px;
         left: auto;
-        width: 55px;
-        height: 55px;
+        width: 50px;
+        height: 50px;
     }
 
     .compass-toggle-btn {
-        bottom: 85px; /* Empilha acima do de coordenadas */
+        bottom: 145px; /* Empilha acima do botão de coordenadas */
         right: 20px;
         left: auto;
     }

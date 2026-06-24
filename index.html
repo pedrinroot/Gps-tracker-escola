@@ -26,8 +26,8 @@
                 <button class="tab-btn active" onclick="switchTab('tab-tracker')">Monitoramento</button>
                 <button class="tab-btn" onclick="switchTab('tab-learn')">Como Funciona?</button>
             </div>
-            <button id="toggle-map-btn" class="btn-header">🗺️ Mostrar Mapa</button>
-            <button id="activate-gps-btn" class="btn-header-success">📡 Iniciar GPS</button>
+            <button id="toggle-map-btn" class="btn-header"><span class="btn-icon">🗺️</span> <span class="btn-text">Mostrar Mapa</span></button>
+            <button id="activate-gps-btn" class="btn-header-success"><span class="btn-icon">📡</span> <span class="btn-text">Iniciar GPS</span></button>
         </div>
 
         <div class="header-center">
@@ -36,10 +36,10 @@
         </div>
 
         <div class="header-right">
-            <button id="stop-all-btn" class="btn-header-admin">Admin: Reset</button>
+            <button id="stop-all-btn" class="btn-header-admin"><span class="btn-icon">⚙️</span> <span class="btn-text">Admin: Reset</span></button>
             <div id="status">
                 <span class="status-dot" id="status-dot"></span>
-                <span id="status-text">Conectando...</span>
+                <span id="status-text" class="status-text">Conectando...</span>
             </div>
         </div>
     </div>
@@ -164,6 +164,18 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Barra de Navegação Inferior para Mobile -->
+    <div id="bottom-nav" class="bottom-navigation">
+        <button class="bottom-tab-btn active" onclick="switchTab('tab-tracker')">
+            <span class="tab-icon">📡</span>
+            <span class="tab-text">Monitoramento</span>
+        </button>
+        <button class="bottom-tab-btn" onclick="switchTab('tab-learn')">
+            <span class="tab-icon">📚</span>
+            <span class="tab-text">Como Funciona?</span>
+        </button>
     </div>
 
     <!-- Scripts do Sistema -->
