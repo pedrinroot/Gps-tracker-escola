@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Tracker - EE José Barbosa Rodrigues</title>
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- MathJax para fórmulas matemáticas bonitas -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Estilos Personalizados -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="header">
+        <div class="header-left">
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('tab-tracker')">Monitoramento</button>
+                <button class="tab-btn" onclick="switchTab('tab-learn')">Como Funciona?</button>
+            </div>
+            <button id="toggle-map-btn" class="btn-header">🗺️ Mostrar Mapa</button>
+            <button id="activate-gps-btn" class="btn-header-success">📡 Iniciar GPS</button>
+        </div>
+
+        <div class="header-center">
+            <h1 class="project-title">Gps - Rastreando o invisível</h1>
+            <span class="school-subtitle">EE José Barbosa Rodrigues</span>
+        </div>
+
+        <div class="header-right">
+            <button id="stop-all-btn" class="btn-header-admin">Admin: Reset</button>
+            <div id="status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Conectando...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA 1: MONITORAMENTO -->
+    <div id="tab-tracker" class="tab-content active">
+        <!-- Botão Flutuante para Abrir a Barra de Coordenadas (Escondida por padrão) -->
+        <button id="sidebar-toggle-btn" class="floating-toggle-btn" onclick="toggleSidebar()">📊</button>
+
+        <!-- Barra Lateral de Coordenadas (Sidebar) -->
+        <div id="info-sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Coordenadas</h3>
+                <button class="close-sidebar-btn" onclick="toggleSidebar(false)">&times;</button>
+            </div>
+            <div class="sidebar-content">
+                <div class="coord-row">
+                    <span class="coord-label">Long (X):</span>
+                    <span class="coord-value" id="coord-x">0.00000</span>
+                </div>
+                <div class="coord-row">
+                    <span class="coord-label">Lat (Y):</span>
+                    <span class="coord-value" id="coord-y">0.00000</span>
+                </div>
+                
+                <!-- Botão de Calibração / Acesso à Bússola (iOS requer interação) -->
+                <button id="compass-permission-btn" class="compass-btn" style="display: none;" onclick="requestCompassPermission()">🧭 Ativar Bússola</button>
+                
+                <p class="sidebar-tip">💡 Clique ou arraste o ponto verde no gráfico cartesiano (radar) ou clique no mapa para alterar sua coordenada.</p>
+            </div>
+        </div>
+
+        <div id="canvas-container"></div>
+        <div id="map-container"></div>
+    </div>
+
+    <!-- ABA 2: TEORIA -->
+    <div id="tab-learn" class="tab-content">
+        <div class="container">
+            <div class="hero-section">
+                <h2>Como Funciona o GPS?</h2>
+                <p>A matemática, a física e a engenharia trabalhando juntas para localizar você.</p>
+            </div>
+
+            <!-- Seção 1: O Sistema de Satélites -->
+            <div class="learn-row grid-2">
+                <div class="learn-card">
+                    <h3>🛰️ A Constelação GPS</h3>
+                    <p>O Sistema de Posicionamento Global é composto por mais de 30 satélites que orbitam a Terra a 20.000 km de altura a uma velocidade incrível de 14.000 km/h.</p>
+                    <p>Eles transmitem constantemente sinais de rádio contendo o <strong>horário exato</strong> em que o sinal foi emitido e sua <strong>posição no espaço</strong>.</p>
+                </div>
+                <div class="image-card">
+                    <img src="satellite_orbit.png" alt="Órbita dos Satélites GPS">
+                </div>
+            </div>
+
+            <!-- Seção 2: Simulação de Trilateração -->
+            <div class="learn-card full-width">
+                <h3>📐 Simulador de Trilateração 2D</h3>
+                <p style="margin-bottom: 20px;">Como seu celular descobre onde você está? Mova os satélites abaixo (arrastando com o mouse ou toque) e veja como a interseção dos raios de sinal determina a sua localização exata.</p>
+                
+                <div class="simulation-wrapper">
+                    <div id="simulation-container"></div>
+                    <div class="simulation-stats">
+                        <h4>Dados dos Satélites</h4>
+                        <div id="sim-sat-a" class="sat-stat">Satélite A (Verde): Calculando...</div>
+                        <div id="sim-sat-b" class="sat-stat">Satélite B (Cyan): Calculando...</div>
+                        <div id="sim-sat-c" class="sat-stat">Satélite C (Rosa): Calculando...</div>
+                        <div class="sat-stat-intersection"><strong>Sua Posição (X, Y):</strong> <span id="sim-user-pos">(0.00, 0.00)</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção 3: Teoria da Relatividade -->
+            <div class="learn-row grid-2">
+                <div class="image-card">
+                    <img src="trilateration_diagram.png" alt="Esquema Teórico de Trilateração">
+                </div>
+                <div class="learn-card">
+                    <h3>🌌 Einstein e o GPS (Física Moderna)</h3>
+                    <p>Os relógios atômicos dos satélites são tão precisos que sofrem efeitos descritos pela <strong>Teoria da Relatividade de Einstein</strong>:</p>
+                    <ul>
+                        <li><strong>Relatividade Especial:</strong> Pelo satélite se mover muito rápido, seu relógio atrasa <strong>7 microssegundos</strong> por dia.</li>
+                        <li><strong>Relatividade Geral:</strong> Pela gravidade ser mais fraca lá em cima, o relógio adianta <strong>45 microssegundos</strong> por dia.</li>
+                    </ul>
+                    <p>O resultado líquido é que o relógio do satélite adianta <strong>38 microssegundos</strong> por dia. Se os engenheiros não fizessem essa correção matemática todos os dias, o GPS erraria mais de <strong>10 km por dia</strong>!</p>
+                </div>
+            </div>
+
+            <!-- Seção 4: Geometria Analítica das Equações -->
+            <div class="learn-card full-width">
+                <h3>✏️ A Matemática das Coordenadas</h3>
+                <p>Para desenhar a posição na tela ou calcular distâncias, a programação usa a Geometria Analítica:</p>
+                
+                <div class="formula-flex">
+                    <div class="formula-card">
+                        <h4>Distância entre Pontos</h4>
+                        <div class="math-render">
+                            \[d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}\]
+                        </div>
+                        <p>Calcula a distância exata em metros entre dois usuários ou do usuário até o centro da escola.</p>
+                    </div>
+
+                    <div class="formula-card">
+                        <h4>Equação da Circunferência</h4>
+                        <div class="math-render">
+                            \[(x - h)^2 + (y - k)^2 = r^2\]
+                        </div>
+                        <p>Representa a onda eletromagnética enviada pelo satélite (onde \((h, k)\) é a posição do satélite e \(r\) o raio do sinal).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção 5: Sobre o Trabalho -->
+            <div class="learn-card project-card">
+                <h3>🏫 Feira de Ciências - EE José Barbosa Rodrigues</h3>
+                <p>Este aplicativo demonstra a aplicação prática da matemática escolar. Ao mapear o pátio da nossa escola e registrar as coordenadas cartesianas dos alunos em tempo real via internet, mostramos como a matemática está viva em tecnologias que usamos todos os dias.</p>
+                <div class="project-footer">
+                    <span><strong>Tema:</strong> Tecnologia, Física e Geometria Analítica</span>
+                    <span><strong>Ano:</strong> 2026</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do Sistema -->
+    <script src="script.js"></script>
+</body>
+
+</html>
