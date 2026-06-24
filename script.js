@@ -34,6 +34,7 @@ let isDraggingLocalDevice = false;
 
 // Variáveis para a Bússola e Filtro do GPS
 let deviceHeading = 0;
+let compassActive = false; // Bússola desligada por padrão
 let emaLat = null;
 let emaLng = null;
 const EMA_ALPHA = 0.3; // Fator de suavização do GPS (quanto menor, mais suave/lento)
@@ -93,38 +94,66 @@ function toggleSidebar(show) {
 // ============================================
 
 function setupCompass() {
-    // Verifica se iOS requer permissão explícita
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        const btn = document.getElementById('compass-permission-btn');
-        if (btn) btn.style.display = 'block'; // Mostra botão para iPhone
-    } else {
+    // Android e outros navegadores registram no onload, mas só rotacionam se compassActive for true
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
         window.addEventListener('deviceorientation', handleOrientation, true);
     }
 }
 
+function toggleCompass() {
+    compassActive = !compassActive;
+    const btn = document.getElementById('compass-toggle-btn');
+    
+    if (compassActive) {
+        if (btn) btn.classList.add('active');
+        requestCompassPermission();
+    } else {
+        if (btn) btn.classList.remove('active');
+        
+        // Reseta a rotação do mapa e do canvas imediatamente
+        const canvasContainer = document.getElementById('canvas-container');
+        const mapContainer = document.getElementById('map-container');
+        if (canvasContainer) canvasContainer.style.transform = '';
+        if (mapContainer) mapContainer.style.transform = '';
+    }
+}
+
 function requestCompassPermission() {
+    // iOS requer permissão explícita
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
             .then(response => {
                 if (response === 'granted') {
                     window.addEventListener('deviceorientation', handleOrientation, true);
+                    // Esconde botão interno se permissão concedida pelo flutuante
                     const btn = document.getElementById('compass-permission-btn');
                     if (btn) btn.style.display = 'none';
                 } else {
                     alert('Permissão para bússola recusada.');
+                    compassActive = false;
+                    const btn = document.getElementById('compass-toggle-btn');
+                    if (btn) btn.classList.remove('active');
                 }
             })
-            .catch(console.error);
+            .catch(err => {
+                console.error(err);
+                compassActive = false;
+                const btn = document.getElementById('compass-toggle-btn');
+                if (btn) btn.classList.remove('active');
+            });
+    } else {
+        // Android ou navegadores que não precisam de requestPermission
+        window.addEventListener('deviceorientation', handleOrientation, true);
     }
 }
 
 function handleOrientation(event) {
-    // webkitCompassHeading é exclusivo do iOS (preciso). Android usa compasso baseado no alpha.
+    if (!compassActive) return; // Só rotaciona se a bússola foi ativada pelo botão!
+    
     let heading = event.webkitCompassHeading || (360 - event.alpha);
     if (heading !== undefined && heading !== null) {
         deviceHeading = heading;
         
-        // Aplica rotação CSS acelerada por hardware no mapa e no canvas
         const canvasContainer = document.getElementById('canvas-container');
         const mapContainer = document.getElementById('map-container');
         
