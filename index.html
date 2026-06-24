@@ -23,8 +23,8 @@
     <div id="header">
         <div class="header-left">
             <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('tab-tracker')">Monitoramento</button>
-                <button class="tab-btn" onclick="switchTab('tab-learn')">Como Funciona?</button>
+                <button class="tab-btn active" onclick="switchTab('tab-tracker')">📡 Parte Prática</button>
+                <button class="tab-btn" onclick="switchTab('tab-learn')">📖 Parte Teórica</button>
             </div>
             <button id="toggle-map-btn" class="btn-header"><span class="btn-icon">🗺️</span> <span class="btn-text">Mostrar Mapa</span></button>
             <button id="activate-gps-btn" class="btn-header-success"><span class="btn-icon">📡</span> <span class="btn-text">Iniciar GPS</span></button>
@@ -81,16 +81,20 @@
     <div id="tab-learn" class="tab-content">
         <div class="container">
             <div class="hero-section">
-                <h2>Como Funciona o GPS?</h2>
-                <p>A matemática, a física e a engenharia trabalhando juntas para localizar você.</p>
+                <h2>A Ciência por trás do GPS</h2>
+                <p>Como a Geometria Analítica e a Relatividade tornam o posicionamento global possível.</p>
             </div>
 
-            <!-- Seção 1: O Sistema de Satélites -->
+            <!-- Seção 1: O Que é e a Diferença Crucial -->
             <div class="learn-row grid-2">
                 <div class="learn-card">
-                    <h3>🛰️ A Constelação GPS</h3>
-                    <p>O Sistema de Posicionamento Global é composto por mais de 30 satélites que orbitam a Terra a 20.000 km de altura a uma velocidade incrível de 14.000 km/h.</p>
-                    <p>Eles transmitem constantemente sinais de rádio contendo o <strong>horário exato</strong> em que o sinal foi emitido e sua <strong>posição no espaço</strong>.</p>
+                    <h3>🛰️ Triangulação vs. Trilateração</h3>
+                    <p>Ao contrário do que muitos pensam, o GPS não usa <strong>Triangulação</strong>, mas sim <strong>Trilateração</strong>:</p>
+                    <ul>
+                        <li><strong>Triangulação:</strong> Determina a posição medindo os <em>ângulos</em> relativos a pontos conhecidos (muito comum em topografia).</li>
+                        <li><strong>Trilateração:</strong> Determina a posição medindo apenas as <em>distâncias</em> diretas até os pontos conhecidos (satélites).</li>
+                    </ul>
+                    <p>O seu receptor (celular) calcula a distância até cada satélite medindo o tempo que o sinal eletromagnético leva para viajar da órbita até a Terra na velocidade da luz.</p>
                 </div>
                 <div class="image-card">
                     <img src="satellite_orbit.png" alt="Órbita dos Satélites GPS">
@@ -100,7 +104,7 @@
             <!-- Seção 2: Simulação de Trilateração -->
             <div class="learn-card full-width">
                 <h3>📐 Simulador de Trilateração 2D</h3>
-                <p style="margin-bottom: 20px;">Como seu celular descobre onde você está? Mova os satélites abaixo (arrastando com o mouse ou toque) e veja como a interseção dos raios de sinal determina a sua localização exata.</p>
+                <p style="margin-bottom: 20px;">Mova os satélites abaixo (arrastando com o mouse ou toque) e veja como a interseção dos raios de sinal (circunferências) determina a sua localização exata.</p>
                 
                 <div class="simulation-wrapper">
                     <div id="simulation-container"></div>
@@ -114,52 +118,77 @@
                 </div>
             </div>
 
-            <!-- Seção 3: Teoria da Relatividade -->
-            <div class="learn-row grid-2">
-                <div class="image-card">
-                    <img src="trilateration_diagram.png" alt="Esquema Teórico de Trilateração">
-                </div>
-                <div class="learn-card">
-                    <h3>🌌 Einstein e o GPS (Física Moderna)</h3>
-                    <p>Os relógios atômicos dos satélites são tão precisos que sofrem efeitos descritos pela <strong>Teoria da Relatividade de Einstein</strong>:</p>
-                    <ul>
-                        <li><strong>Relatividade Especial:</strong> Pelo satélite se mover muito rápido, seu relógio atrasa <strong>7 microssegundos</strong> por dia.</li>
-                        <li><strong>Relatividade Geral:</strong> Pela gravidade ser mais fraca lá em cima, o relógio adianta <strong>45 microssegundos</strong> por dia.</li>
-                    </ul>
-                    <p>O resultado líquido é que o relógio do satélite adianta <strong>38 microssegundos</strong> por dia. Se os engenheiros não fizessem essa correção matemática todos os dias, o GPS erraria mais de <strong>10 km por dia</strong>!</p>
-                </div>
-            </div>
-
-            <!-- Seção 4: Geometria Analítica das Equações -->
+            <!-- Seção 3: A Geometria Analítica do GPS -->
             <div class="learn-card full-width">
-                <h3>✏️ A Matemática das Coordenadas</h3>
-                <p>Para desenhar a posição na tela ou calcular distâncias, a programação usa a Geometria Analítica:</p>
+                <h3>✏️ A Geometria Analítica das Coordenadas</h3>
+                <p>A localização é baseada no cálculo de distâncias. Se conhecemos as coordenadas tridimensionais de um satélite \((x_i, y_i, z_i)\) e a distância \(d_i\) até ele, o usuário \((x, y, z)\) deve pertencer à superfície de uma esfera definida pela equação:</p>
                 
                 <div class="formula-flex">
                     <div class="formula-card">
-                        <h4>Distância entre Pontos</h4>
+                        <h4>Distância Euclidiana no Espaço (3D)</h4>
                         <div class="math-render">
-                            \[d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}\]
+                            \[d = \sqrt{(x - x_i)^2 + (y - y_i)^2 + (z - z_i)^2}\]
                         </div>
-                        <p>Calcula a distância exata em metros entre dois usuários ou do usuário até o centro da escola.</p>
+                        <p>Calcula a reta direta entre o satélite e o receptor celular.</p>
                     </div>
 
                     <div class="formula-card">
-                        <h4>Equação da Circunferência</h4>
+                        <h4>Equação Geral da Esfera (3D)</h4>
                         <div class="math-render">
-                            \[(x - h)^2 + (y - k)^2 = r^2\]
+                            \[(x - x_i)^2 + (y - y_i)^2 + (z - z_i)^2 = d_i^2\]
                         </div>
-                        <p>Representa a onda eletromagnética enviada pelo satélite (onde \((h, k)\) é a posição do satélite e \(r\) o raio do sinal).</p>
+                        <p>Define a "bolha" de posições possíveis ao redor de um único satélite.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Seção 5: Sobre o Trabalho -->
+            <!-- Seção 4: O Truque da Linearização (Eixo Radical) -->
+            <div class="learn-row grid-2">
+                <div class="learn-card">
+                    <h3>📐 Como o GPS Resolve as Equações?</h3>
+                    <p>Resolver um sistema de equações quadráticas (esferas) é difícil e pesado para chips de celulares. Mas existe um truque matemático genial da Geometria Analítica:</p>
+                    <p>Ao subtrair as equações de duas esferas, os termos quadráticos \(x^2\), \(y^2\) e \(z^2\) se cancelam mutuamente!</p>
+                    <p>Por exemplo, em 2D, a subtração das equações de dois círculos resulta na equação de uma reta (o <strong>Eixo Radical</strong>) que passa pelas interseções:</p>
+                    <div class="math-render" style="font-size: 1.1rem; padding: 10px;">
+                        \[2(x_A - x_B)x + 2(y_A - y_B)y = (d_B^2 - d_A^2) - (x_B^2 - x_A^2) - (y_B^2 - y_A^2)\]
+                    </div>
+                    <p>Esse processo transforma um problema quadrático complexo em um **Sistema Linear simples** (do tipo \(Ax = B\)), resolvido em microssegundos por matrizes!</p>
+                </div>
+                <div class="image-card">
+                    <img src="trilateration_diagram.png" alt="Esquema Teórico de Trilateração">
+                </div>
+            </div>
+
+            <!-- Seção 5: Einstein, Relatividade e GDOP -->
+            <div class="learn-row grid-2">
+                <div class="learn-card">
+                    <h3>🌌 Relatividade Geral e Especial</h3>
+                    <p>Como o sinal viaja à velocidade da luz (\(300.000\text{ km/s}\)), qualquer erro de <strong>1 microssegundo</strong> no relógio resulta em um erro de <strong>300 metros</strong> na Terra!</p>
+                    <p>Os relógios atômicos dos satélites sofrem efeitos descritos pelas teorias de Einstein:</p>
+                    <ul>
+                        <li><strong>Relatividade Especial:</strong> Pelo alta velocidade, o tempo passa mais devagar nos satélites (**-7 microssegundos** por dia).</li>
+                        <li><strong>Relatividade Geral:</strong> Pela gravidade ser mais fraca na órbita, o tempo passa mais rápido (**+45 microssegundos** por dia).</li>
+                    </ul>
+                    <p>A compensação líquida de **+38 microssegundos** por dia é corrigida matematicamente nos algoritmos do GPS. Sem isso, o GPS falharia por mais de **10 km todos os dias**!</p>
+                </div>
+
+                <div class="learn-card">
+                    <h3>🛰️ GDOP (Diluição de Precisão)</h3>
+                    <p>Além das equações, a precisão depende de como os satélites estão distribuídos no céu:</p>
+                    <ul>
+                        <li><strong>GDOP Alto (Ruim):</strong> Se os satélites estiverem muito próximos uns dos outros, as esferas se interceptam de forma quase paralela, aumentando a margem de erro.</li>
+                        <li><strong>GDOP Baixo (Excelente):</strong> Se os satélites estiverem espalhados e distantes no céu, as esferas se cortam em ângulos retos, gerando uma área de interseção extremamente precisa.</li>
+                    </ul>
+                    <p>É por isso que seu celular sempre escolhe satélites espalhados em direções opostas no horizonte.</p>
+                </div>
+            </div>
+
+            <!-- Seção 6: Sobre o Trabalho -->
             <div class="learn-card project-card">
                 <h3>🏫 Feira de Ciências - EE José Barbosa Rodrigues</h3>
                 <p>Este aplicativo demonstra a aplicação prática da matemática escolar. Ao mapear o pátio da nossa escola e registrar as coordenadas cartesianas dos alunos em tempo real via internet, mostramos como a matemática está viva em tecnologias que usamos todos os dias.</p>
                 <div class="project-footer">
-                    <span><strong>Tema:</strong> Tecnologia, Física e Geometria Analítica</span>
+                    <span><strong>Tema:</strong> Tecnologia, Física Moderna e Geometria Analítica</span>
                     <span><strong>Ano:</strong> 2026</span>
                 </div>
             </div>
@@ -170,11 +199,11 @@
     <div id="bottom-nav" class="bottom-navigation">
         <button class="bottom-tab-btn active" onclick="switchTab('tab-tracker')">
             <span class="tab-icon">📡</span>
-            <span class="tab-text">Monitoramento</span>
+            <span class="tab-text">Parte Prática</span>
         </button>
         <button class="bottom-tab-btn" onclick="switchTab('tab-learn')">
-            <span class="tab-icon">📚</span>
-            <span class="tab-text">Como Funciona?</span>
+            <span class="tab-icon">📖</span>
+            <span class="tab-text">Parte Teórica</span>
         </button>
     </div>
 

@@ -386,7 +386,7 @@ function drawActiveDevices() {
 
 // -- LÓGICA DE CLIQUE E ARRASTO NO CANVAS GLOBAL --
 function mousePressed() {
-    if (mapVisible || document.querySelector('.tab-btn.active').textContent !== 'Monitoramento') return;
+    if (mapVisible || !document.getElementById('tab-tracker').classList.contains('active')) return;
 
     let myDev = activeDevices[myDeviceId];
     if (myDev) {
